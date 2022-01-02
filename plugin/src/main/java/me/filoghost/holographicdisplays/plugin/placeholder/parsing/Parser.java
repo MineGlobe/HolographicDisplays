@@ -16,6 +16,7 @@ class Parser {
 
     private static final char PLACEHOLDER_START_CHAR = '{';
     private static final char PLACEHOLDER_END_CHAR = '}';
+    private static final char ESCAPE_CHAR = '\\';
 
     /**
      * Returns null if the string doesn't contain any placeholder (optimization).
@@ -24,17 +25,22 @@ class Parser {
         List<Part> parts = null;
         int placeholderStartIndex = -1;
         int lastAppendIndex = 0;
+        boolean escapeNext = false;
 
         for (int currentIndex = 0; currentIndex < string.length(); currentIndex++) {
             char currentChar = string.charAt(currentIndex);
 
             if (placeholderStartIndex >= 0) {
-                // Inside placeholder
-                if (currentChar == PLACEHOLDER_END_CHAR) {
+                if (escapeNext) {
+                    escapeNext = false;
+                } else if (currentChar == ESCAPE_CHAR) {
+                    escapeNext = true;
+                } else if (currentChar == PLACEHOLDER_END_CHAR) {
+                    // Inside placeholder
                     int endIndex = currentIndex + 1;
 
                     // The unparsed string includes the opening and closing tags (e.g.: "{online: lobby}")
-                    String unparsedString = string.substring(placeholderStartIndex, endIndex);
+                    String unparsedString = removeEscapes(string.substring(placeholderStartIndex, endIndex));
 
                     // The content string does NOT include the opening and closing tags (e.g.: "online: lobby")
                     String contentString = unparsedString.substring(1, unparsedString.length() - 1);
@@ -72,6 +78,26 @@ class Parser {
         }
 
         return parts;
+    }
+
+    private static String removeEscapes(String string) {
+        StringBuilder output = new StringBuilder(string.length());
+        boolean escape = false;
+
+        for (int currentIndex = 0; currentIndex < string.length(); currentIndex++) {
+            char currentChar = string.charAt(currentIndex);
+
+            if (escape) {
+                escape = false;
+            } else if (currentChar == ESCAPE_CHAR) {
+                escape = true;
+                continue; // Do not append the escape character
+            }
+
+            output.append(currentChar);
+        }
+
+        return output.toString();
     }
 
 }

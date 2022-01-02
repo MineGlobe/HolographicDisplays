@@ -100,4 +100,21 @@ class StringWithPlaceholdersTest {
         );
     }
 
+    @ParameterizedTest(name = "[{index}] {0} -> {1}")
+    @MethodSource("escapesTestArguments")
+    void escapes(String input, String expectedOutput) {
+        StringWithPlaceholders s = StringWithPlaceholders.of(input);
+
+        String actualOutput = s.replacePlaceholders(null, (player, occurrence) -> "[" + occurrence.getUnparsedContent() + "]");
+        assertThat(actualOutput).isEqualTo(expectedOutput);
+    }
+
+    static Stream<Arguments> escapesTestArguments() {
+        return Stream.of(
+                Arguments.of("{p\\{inner\\}}", "[p{inner}]"),
+                Arguments.of("{p\\}}", "[p}]"),
+                Arguments.of("{p\\{}", "[p{]")
+        );
+    }
+
 }
